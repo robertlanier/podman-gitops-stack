@@ -1,0 +1,39 @@
+# =========================
+# macOS
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+
+# =========================
+# Ansible
+# =========================
+*.retry
+.ansible_vault_pass
+ansible.log
+
+# Inventory / secrets (real files, not examples)
+bootstrap/ansible/inventory/hosts.yml
+bootstrap/ansible/group_vars/**/vault.yml
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+*.code-workspace
+
+# =========================
+# OS / Editor temp files
+# =========================
+*.swp
+*.tmp
