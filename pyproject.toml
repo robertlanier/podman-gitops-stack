@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "podman-gitops-stack"
+version = "0.1.0"
+description = "Rootless Podman homelab stack with a GitOps-style desired state and reconciliation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Contributors" }]
+keywords = ["podman", "gitops", "homelab", "ansible", "servarr", "plex"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: System Administrators",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: System :: Systems Administration",
+]
+
+dependencies = [
+  "PyYAML>=6.0.1,<7",
+]
+
+[project.optional-dependencies]
+# Dev tooling for this repo (linting + tests + Ansible content tooling). Note: ansible-dev-tools
+# includes ansible-lint and other Ansible dev utilities.
+dev = [
+  "ansible-dev-tools>=25.0.0,<26",
+  "pytest>=8.0.0,<9",
+  "ruff>=0.6.0,<1",
+]
+
+[project.scripts]
+stackctl = "orchestration.stackctl.cli:main"
+
+[tool.setuptools]
+# This repo is a multi-folder stack (bootstrap/, config/, orchestration/, etc.).
+# Explicitly package ONLY the Python code under `orchestration/`.
+packages = ["orchestration"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["orchestration", "stackctl"]
