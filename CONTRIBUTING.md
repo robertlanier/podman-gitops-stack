@@ -1,9 +1,13 @@
 # Contributing
 
+Good first contributions include documentation improvements, lint fixes, and small enhancements to existing roles or commands.
+
+This project targets Linux hosts where Podman is supported (e.g. RHEL / CentOS Stream / Fedora ).
+
 Thanks for contributing! This repo is designed to be:
 
 - **Portable** (works across Linux distros where Podman is supported)
-- **GitOps-friendly** (config in git, reconciliation via `stackctl`)
+- **GitOps-friendly** (config in git, reconciliation via `stackctl`; contributors do not need to understand internals to get started)
 - **Safe** (no secrets committed)
 
 ## Development setup
@@ -60,7 +64,7 @@ Examples:
 
 ## Running checks
 
-If/when these exist in the repo, run:
+As the project evolves, the following checks may be available:
 
 ```bash
 ruff check .
@@ -71,7 +75,7 @@ pytest
 
 **Do not commit secrets. Ever.**
 
-Examples of things that mus never be committed:
+Examples of things that must never be committed:
 
 - CIFS/SMB credentials
 - vault passwords

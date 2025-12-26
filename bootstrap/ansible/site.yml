@@ -1,0 +1,9 @@
+---
+- name: Configure stack host OS
+  hosts: stack
+  become: true
+
+  roles:
+    - users
+    - base
+    - nas

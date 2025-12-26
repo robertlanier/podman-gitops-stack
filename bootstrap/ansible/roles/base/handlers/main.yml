@@ -1,0 +1,7 @@
+---
+# Cockpit is socket-activated; restarting the socket is sufficient
+- name: Restart cockpit
+  ansible.builtin.systemd:
+    name: cockpit.socket
+    state: restarted
+    enabled: true

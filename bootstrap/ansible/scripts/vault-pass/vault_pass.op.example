@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OP_REF="op://<VAULT>/<ITEM>/password"
+
+# Ensure op CLI exists
+if ! command -v op >/dev/null 2>&1; then
+  echo "ERROR: 1Password CLI (op) not found." >&2
+  echo "Install it from https://developer.1password.com/docs/cli" >&2
+  exit 2
+fi
+
+# Ensure user is signed in
+if ! op account list >/dev/null 2>&1; then
+  echo "ERROR: You are not signed in to 1Password CLI." >&2
+  echo "Run: op signin" >&2
+  exit 2
+fi
+
+# Read vault password
+op read "$OP_REF"

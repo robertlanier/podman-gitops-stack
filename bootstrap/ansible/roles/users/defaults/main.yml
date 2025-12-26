@@ -1,0 +1,6 @@
+---
+# Stack service user defaults. Override in group_vars/stack/main.yml.
+users_stack_user_name: stack
+users_stack_user_uid: 13000
+users_stack_group_name: stack
+users_stack_group_gid: 13000

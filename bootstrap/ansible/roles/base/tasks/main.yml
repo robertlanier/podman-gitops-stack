@@ -1,0 +1,32 @@
+---
+- name: Ensure base packages are installed
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - git
+      - python3
+      - python3-pip
+      - cifs-utils
+      - cockpit
+      - cockpit-podman
+      - nano
+      - neovim
+      - unzip
+      - epel-release
+      - btop
+    state: present
+
+- name: Enable and start cockpit.socket
+  ansible.builtin.systemd:
+    name: cockpit.socket
+    enabled: true
+    state: started
+  notify: Restart cockpit
+
+- name: Ensure /srv/podman exists for stack data
+  ansible.builtin.file:
+    path: /srv/podman
+    state: directory
+    owner: "{{ users_stack_user_name }}"
+    group: "{{ users_stack_group_name }}"
+    mode: '0775'

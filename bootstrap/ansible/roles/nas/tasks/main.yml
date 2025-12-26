@@ -1,0 +1,49 @@
+---
+- name: Ensure NAS mountpoint exists
+  ansible.builtin.file:
+    path: "{{ nas_mount_point }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure /etc/secure directory exists for NAS credentials
+  ansible.builtin.file:
+    path: "/etc/secure"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Ensure NAS credentials variables are provided
+  ansible.builtin.assert:
+    that:
+      - nas_credentials_file is defined
+      - nas_username is defined
+      - nas_password is defined
+      - (nas_username | string | length) > 0
+      - (nas_password | string | length) > 0
+    fail_msg: >-
+      NAS credentials are not configured. Define nas_username and nas_password
+      (preferably in an encrypted group_vars/stack/vault.yml), and ensure
+      nas_credentials_file is set (e.g., /etc/secure/cifs_creds).
+
+# NAS credentials come from vaulted group_vars/stack/vault.yml
+- name: Ensure NAS credentials file exists
+  ansible.builtin.copy:
+    dest: "{{ nas_credentials_file }}"
+    content: |
+      username={{ nas_username }}
+      password={{ nas_password }}
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Ensure NAS share is mounted (and persisted in fstab)
+  ansible.posix.mount:
+    path: "{{ nas_mount_point }}"
+    src: "//{{ nas_server }}/{{ nas_share }}"
+    fstype: cifs
+    opts: "_netdev,vers={{ nas_cifs_vers }},credentials={{ nas_credentials_file }}{{ (',' + (nas_cifs_extra_opts | default('') | trim)) if ((nas_cifs_extra_opts | default('') | trim) | length > 0) else '' }}"
+    state: mounted

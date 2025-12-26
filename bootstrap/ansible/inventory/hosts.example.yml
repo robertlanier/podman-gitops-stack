@@ -1,0 +1,9 @@
+all:
+  children:
+    stack:
+      hosts:
+        server:
+          ansible_host: 192.168.1.10  # example server IP
+          ansible_user: stack         # ansible / service user on the server
+          ansible_ssh_private_key_file: ~/.ssh/id_ed25519  # example SSH key
+          ansible_python_interpreter: /usr/bin/python3    # default on most modern distros

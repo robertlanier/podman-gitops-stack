@@ -1,0 +1,63 @@
+---
+- name: Ensure Stack group exists
+  ansible.builtin.group:
+    name: "{{ users_stack_group_name }}"
+    gid: "{{ users_stack_group_gid }}"
+    state: present
+
+- name: Ensure Stack user exists (rootless Podman owner)
+  ansible.builtin.user:
+    name: "{{ users_stack_user_name }}"
+    uid: "{{ users_stack_user_uid }}"
+    group: "{{ users_stack_group_name }}"
+    home: "/home/{{ users_stack_user_name }}"
+    create_home: true
+    shell: /bin/bash
+    password: "!"
+    state: present
+
+# Optional: ensure the user has a subuid/subgid range for rootless podman
+# On CentOS this is usually auto-managed by shadow-utils, but this makes it explicit.
+- name: Ensure /etc/subuid has an entry for stack user
+  ansible.builtin.lineinfile:
+    path: /etc/subuid
+    regexp: "^{{ users_stack_user_name }}:"
+    line: "{{ users_stack_user_name }}:100000:65536"
+    create: true
+    mode: "0644"
+
+- name: Ensure /etc/subgid has an entry for stack user
+  ansible.builtin.lineinfile:
+    path: /etc/subgid
+    regexp: "^{{ users_stack_user_name }}:"
+    line: "{{ users_stack_user_name }}:100000:65536"
+    create: true
+    mode: "0644"
+
+# SSH for automation user
+- name: Ensure .ssh directory exists for stack user
+  ansible.builtin.file:
+    path: "/home/{{ users_stack_user_name }}/.ssh"
+    state: directory
+    owner: "{{ users_stack_user_name }}"
+    group: "{{ users_stack_group_name }}"
+    mode: "0700"
+
+- name: Install authorized_keys for stack user
+  ansible.builtin.copy:
+    dest: "/home/{{ users_stack_user_name }}/.ssh/authorized_keys"
+    content: "{{ stack_user_ssh_pubkey }}"
+    owner: "{{ users_stack_user_name }}"
+    group: "{{ users_stack_group_name }}"
+    mode: "0600"
+  when: stack_user_ssh_pubkey is defined and stack_user_ssh_pubkey | length > 0
+
+# Passwordless sudo for automation user
+- name: Allow stack user passwordless sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ users_stack_user_name }}"
+    content: "{{ users_stack_user_name }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"

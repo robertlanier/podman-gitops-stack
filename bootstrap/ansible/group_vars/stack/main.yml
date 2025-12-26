@@ -1,9 +1,7 @@
 ---
-# Copy this file to group_vars/stack/main.yml and edit values for your environment.
+stack_name: "podman-stack"                 # label used in docs/logging/etc
 
-stack_name: "podman-stack"
-
-# Stack service user (rootless Podman owner)
+# Stack service user (Rootless Podman service account)
 
 # -------------------------------------------------------------------
 # UID/GID POLICY
@@ -21,7 +19,7 @@ users_stack_group_name: "stack"
 users_stack_group_gid: 13000
 
 # NAS / CIFS configuration
-nas_server: "nas.lan.example"
+nas_server: "192.168.8.20" # change to fqdn when dns setup
 nas_share: "Data"
 nas_mount_point: "/mnt/data"
 nas_credentials_file: "/etc/secure/cifs_creds"

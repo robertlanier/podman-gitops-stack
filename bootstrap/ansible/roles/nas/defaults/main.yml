@@ -1,0 +1,12 @@
+---
+# Default mount location for NAS media
+nas_mount_point: "/mnt/data"
+
+# Location of CIFS credentials file (root-owned)
+nas_credentials_file: "/etc/secure/cifs_creds"
+
+# CIFS protocol version
+nas_cifs_vers: "3.0"
+
+# Additional CIFS mount options (comma-separated)
+nas_cifs_extra_opts: "iocharset=utf8"

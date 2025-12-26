@@ -1,48 +1,85 @@
-# =========================
-# Python
-# =========================
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.venv/
-.env
-*.egg-info/
+# ============================================================
+# podman-gitops-stack - .gitignore
+# Keep the repo public-safe: ignore real inventories, secrets,
+# local vault password hooks, and machine-specific files.
+# ============================================================
+
 
 # =========================
-# Ansible
-# =========================
-*.retry
-.ansible_vault_pass
-ansible.log
-
-# Inventory / secrets (real files, not examples)
-bootstrap/ansible/inventory/hosts.yml
-bootstrap/ansible/inventory/hosts.private.yml
-bootstrap/ansible/inventory/hosts.local.yml
-bootstrap/ansible/group_vars/**/vault.yml
-
-# =========================
-# OS / Editor files
+# OS / Editor junk
 # =========================
 .DS_Store
 .AppleDouble
 .LSOverride
 *.swp
 *.tmp
+.idea/
 .vscode/
 *.code-workspace
-.idea/
+
 
 # =========================
-# Secrets / local-only files
+# Python
 # =========================
-# do not commit real IPs/domains or sensitive data
-bootstrap/ansible/.vault_pass.op.sh
-bootstrap/ansible/.vault_pass*
-**/vault.yml
-**/vault*.yml
-**/secrets.yml
-**/secrets*.yml
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
 .env
 .env.*
+
+
+# =========================
+# Ansible runtime / logs
+# =========================
+*.retry
+ansible.log
+.ansible/
+bootstrap/ansible/.ansible/
+
+
+# =========================
+# Ansible Galaxy collections (vendored locally)
+# We ignore the installed collections, but keep the lock/requirements file.
+# =========================
+bootstrap/ansible/collections/*
+!bootstrap/ansible/collections/requirements.yml
+
+
+# =========================
+# Inventory (real files, not examples)
+# =========================
+bootstrap/ansible/inventory/hosts.yml
+bootstrap/ansible/inventory/hosts.private.yml
+bootstrap/ansible/inventory/hosts.local.yml
+
+
+# =========================
+# Ansible Vault secrets (real files, not examples)
+# Only ignore the canonical vault.yml; keep vault.example.yml tracked.
+# =========================
+bootstrap/ansible/group_vars/**/vault.yml
+
+
+# =========================
+# Vault password hooks (local-only)
+# Users can choose any backend (op/file/env/etc) by creating .vault_pass.
+# =========================
+bootstrap/ansible/.vault_pass
+bootstrap/ansible/.vault_pass.*
+
+
+# =========================
+# Repo-wide secrets conventions
+# Ignore real secrets files, but allow examples.
+# =========================
+**/secrets.yml
+**/secrets*.yml
+!**/secrets.example.yml
+!**/secrets.example.yaml
+
+
+# =========================
+# Legacy / compatibility ignores
+# =========================
+.ansible_vault_pass
