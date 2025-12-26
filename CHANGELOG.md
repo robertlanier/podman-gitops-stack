@@ -1,16 +1,10 @@
-# Changelog
+## [0.1.0] - 2025-12-26
 
-All notable changes to this project will be documented in this file.
+### 🚀 Features
 
-This project follows a lightweight versioning approach during the `0.x` phase.
-Commit messages generally follow Conventional Commits (e.g., `feat:`, `fix:`, `chore:`).
+- Finalized ansible bootstrap and vault UX
 
-## Unreleased
+### ⚙️ Miscellaneous Tasks
 
-- _Nothing yet_
-
-## v0.1.0
-
-- Initial project scaffold and CLI wiring
-- Python packaging (`pyproject.toml`) and editable install support
-- Dependency groups for `dev` and `orchestrator`
+- Wire up stackctl CLI entrypoint
+- Add project metadata, dev tooling, and docs
