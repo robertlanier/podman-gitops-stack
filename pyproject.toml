@@ -33,6 +33,10 @@ dev = [
   "ruff>=0.6.0,<1",
 ]
 
+orchestrator = [
+  "podman>=5.0.0",
+]
+
 [project.scripts]
 stackctl = "orchestration.stackctl.cli:main"
 

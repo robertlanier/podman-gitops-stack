@@ -1,11 +1,4 @@
 # =========================
-# macOS
-# =========================
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# =========================
 # Python
 # =========================
 __pycache__/
@@ -25,16 +18,31 @@ ansible.log
 
 # Inventory / secrets (real files, not examples)
 bootstrap/ansible/inventory/hosts.yml
+bootstrap/ansible/inventory/hosts.private.yml
+bootstrap/ansible/inventory/hosts.local.yml
 bootstrap/ansible/group_vars/**/vault.yml
 
 # =========================
-# VS Code
+# OS / Editor files
 # =========================
-.vscode/
-*.code-workspace
-
-# =========================
-# OS / Editor temp files
-# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
 *.swp
 *.tmp
+.vscode/
+*.code-workspace
+.idea/
+
+# =========================
+# Secrets / local-only files
+# =========================
+# do not commit real IPs/domains or sensitive data
+bootstrap/ansible/.vault_pass.op.sh
+bootstrap/ansible/.vault_pass*
+**/vault.yml
+**/vault*.yml
+**/secrets.yml
+**/secrets*.yml
+.env
+.env.*
