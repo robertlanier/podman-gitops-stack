@@ -13,6 +13,9 @@
 .LSOverride
 *.swp
 *.tmp
+*.bak
+*.orig
+*.patch
 .idea/
 .vscode/
 *.code-workspace
@@ -34,6 +37,7 @@ __pycache__/
 # =========================
 *.retry
 ansible.log
+.log
 .ansible/
 bootstrap/ansible/.ansible/
 
@@ -49,9 +53,27 @@ bootstrap/ansible/collections/*
 # =========================
 # Inventory (real files, not examples)
 # =========================
+# Common inventory filenames
 bootstrap/ansible/inventory/hosts.yml
+bootstrap/ansible/inventory/hosts.yaml
+bootstrap/ansible/inventory/hosts.ini
+bootstrap/ansible/inventory/inventory.yml
+bootstrap/ansible/inventory/inventory.yaml
+bootstrap/ansible/inventory/inventory.ini
+
+# Private variants
 bootstrap/ansible/inventory/hosts.private.yml
+bootstrap/ansible/inventory/hosts.private.yaml
+bootstrap/ansible/inventory/hosts.private.ini
 bootstrap/ansible/inventory/hosts.local.yml
+bootstrap/ansible/inventory/hosts.local.yaml
+bootstrap/ansible/inventory/hosts.local.ini
+
+# Catch-all: ignore any inventory files in this folder,
+# but allow committed examples.
+bootstrap/ansible/inventory/*
+!bootstrap/ansible/inventory/*.example*
+!bootstrap/ansible/inventory/README*
 
 
 # =========================
@@ -59,6 +81,17 @@ bootstrap/ansible/inventory/hosts.local.yml
 # Only ignore the canonical vault.yml; keep vault.example.yml tracked.
 # =========================
 bootstrap/ansible/group_vars/**/vault.yml
+bootstrap/ansible/group_vars/**/vault.yaml
+
+
+# =========================
+# Group vars (real files, not examples)
+# Keep *.example.yml tracked; ignore environment-specific main.yml files.
+# =========================
+bootstrap/ansible/group_vars/**/main.yml
+bootstrap/ansible/group_vars/**/main.yaml
+!bootstrap/ansible/group_vars/**/main.example.yml
+!bootstrap/ansible/group_vars/**/main.example.yaml
 
 
 # =========================
@@ -74,9 +107,15 @@ bootstrap/ansible/.vault_pass.*
 # Ignore real secrets files, but allow examples.
 # =========================
 **/secrets.yml
-**/secrets*.yml
+**/secrets.yaml
+**/secrets.*.yml
+**/secrets.*.yaml
+**/secrets_*.yml
+**/secrets_*.yaml
 !**/secrets.example.yml
 !**/secrets.example.yaml
+!**/secrets.*.example.yml
+!**/secrets.*.example.yaml
 
 
 # =========================
