@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  bootstrap-ansible:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: bootstrap/ansible
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install repo dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "../..[dev]"
+
+      - name: Install Ansible collections
+        run: |
+          ansible-galaxy collection install -r collections/requirements.yml
+
+      - name: Debug tool versions
+        run: |
+          python --version
+          pip --version
+          ansible --version
+          ansible-lint --version
+
+      - name: YAML lint
+        run: |
+          yamllint -c ../../.yamllint .
+
+      - name: Ansible lint
+        run: |
+          ansible-lint -v site.yml roles
+
+  python-sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install repo dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Python compile check
+        run: |
+          python -m compileall orchestration
+
+      - name: Ruff
+        run: |
+          ruff check .
+
+      - name: Pytest
+        run: |
+          pytest -q

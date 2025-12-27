@@ -90,6 +90,8 @@ Confirm installation:
 ansible --version
 ```
 
+> **Note:** CI will run lint + syntax checks automatically on pull requests and pushes to main.
+
 ---
 
 ### Why Ansible Galaxy Is Still Required
@@ -102,11 +104,13 @@ Python package managers (pip / pyproject.toml) and Ansible Galaxy solve **differ
 Even when Ansible is installed via `pip`, Galaxy collections **are not Python packages** and must be installed separately.
 
 Examples of Galaxy-managed content:
+
 - `ansible.posix`
 - `community.general`
 - Custom modules and filters
 
 That is why this project uses **both**:
+
 - `pip install -e ".[dev]"` for Python tooling
 - `ansible-galaxy collection install -r bootstrap/ansible/collections/requirements.yml` for Ansible content
 
@@ -196,11 +200,6 @@ podman-gitops-stack/
   │            │     └── vault-pass/
   │            │           └── vault_pass.sh            # vault password helper script
   │            ├── .ansible/                             # runtime cache and Galaxy metadata (gitignored)
-  │            ├── requirements.txt                      # Ansible/Python deps for bootstrap
-  │            └── README.md
-  ├── scripts/
-  │     └── vault-pass/
-  │           └── vault_pass.sh                        # vault password helper script
   ├── .gitignore
   ├── .venv/                                             # root Python venv (recommended)
   └── README.md
@@ -370,7 +369,31 @@ __pycache__/
 
 ---
 
-## 12. Tag Your Bootstrap Release
+## 12. CI Checks
+
+This project uses GitHub Actions to run style and correctness checks on all pull requests and pushes to main.
+
+Checks include:
+
+- yamllint  
+- ansible-lint  
+- `ansible-playbook --syntax-check`
+
+To run the same checks locally from the repository root, use:
+
+```bash
+pip install -e ".[dev]"
+ansible-galaxy collection install -r bootstrap/ansible/collections/requirements.yml
+yamllint -c .yamllint bootstrap/ansible
+cd bootstrap/ansible && ansible-lint -v site.yml roles --exclude collections
+ansible-playbook -i bootstrap/ansible/inventory/hosts.ci.yml bootstrap/ansible/site.yml --syntax-check
+```
+
+> The CI inventory targets localhost and is safe to run without making any real changes.
+
+---
+
+## 13. Tag Your Bootstrap Release
 
 Once everything looks correct:
 
@@ -384,7 +407,7 @@ git push --tags
 
 ---
 
-## 13. What Comes Next (Phase 2)
+## 14. What Comes Next (Phase 2)
 
 This bootstrap component prepares the OS.  
 Next we will build:
