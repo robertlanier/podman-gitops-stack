@@ -1,4 +1,76 @@
 ---
+- name: Validate users role prerequisites (stack service account)
+  ansible.builtin.assert:
+    that:
+      # -------------------------------------------------------------------
+      # REQUIRED INPUTS
+      # -------------------------------------------------------------------
+      - users_stack_user_name is defined
+      - users_stack_group_name is defined
+      - users_stack_user_uid is defined
+      - users_stack_group_gid is defined
+      - users_uid_min is defined
+      - users_gid_min is defined
+      - users_subid_start is defined
+      - users_subid_count is defined
+      - users_stack_user_ssh_pubkey_regex is defined
+
+      # -------------------------------------------------------------------
+      # NAME SAFETY
+      # - Must be non-empty
+      # - Must not be 'root'
+      # - Must be a safe Linux identifier
+      # -------------------------------------------------------------------
+      - (users_stack_user_name | string | length) > 0
+      - (users_stack_group_name | string | length) > 0
+      - (users_stack_user_name | string) != 'root'
+      - (users_stack_group_name | string) != 'root'
+      - (users_stack_user_name | string) is match('^[a-z_][a-z0-9_-]*$')
+      - (users_stack_group_name | string) is match('^[a-z_][a-z0-9_-]*$')
+
+      # -------------------------------------------------------------------
+      # UID/GID POLICY
+      # - Enforced via users_uid_min/users_gid_min (override in group_vars)
+      # - Keep <60000 to avoid collisions with some systems/exports
+      # -------------------------------------------------------------------
+      - (users_stack_user_uid | int) >= (users_uid_min | int)
+      - (users_stack_group_gid | int) >= (users_gid_min | int)
+      - (users_stack_user_uid | int) < 60000
+      - (users_stack_group_gid | int) < 60000
+
+      # -------------------------------------------------------------------
+      # ROOTLESS PODMAN SUBUID/SUBGID RANGE
+      # - Independent of host UID/GID
+      # - Defaults are widely used on RHEL-family systems
+      # -------------------------------------------------------------------
+      - (users_subid_start | int) >= 10000
+      - (users_subid_count | int) >= 65536
+
+      # -------------------------------------------------------------------
+      # OPTIONAL: SSH PUBLIC KEY SANITY
+      # If provided, it should look like ssh-ed25519/ssh-rsa/ecdsa...
+      # -------------------------------------------------------------------
+      - >-
+        stack_user_ssh_pubkey is not defined
+        or (stack_user_ssh_pubkey | string | trim | length) == 0
+        or (stack_user_ssh_pubkey | string | trim) is match(users_stack_user_ssh_pubkey_regex)
+    fail_msg: >-
+      Users role prerequisites failed.
+
+      What you need to provide (usually in group_vars/stack/main.yml):
+      - users_stack_user_name / users_stack_group_name
+      - users_stack_user_uid / users_stack_group_gid
+
+      Policy controls (override if desired):
+      - users_uid_min / users_gid_min
+      - users_subid_start / users_subid_count
+
+      Rules enforced by this role:
+      - Names must be safe Linux identifiers and must not be 'root'.
+      - UID/GID must be >= users_uid_min/users_gid_min and < 60000.
+      - Subuid/subgid range is used for rootless Podman and must be sane.
+      - If stack_user_ssh_pubkey is set, it must look like a valid SSH public key.
+
 - name: Ensure Stack group exists
   ansible.builtin.group:
     name: "{{ users_stack_group_name }}"
@@ -22,7 +94,7 @@
   ansible.builtin.lineinfile:
     path: /etc/subuid
     regexp: "^{{ users_stack_user_name }}:"
-    line: "{{ users_stack_user_name }}:100000:65536"
+    line: "{{ users_stack_user_name }}:{{ users_subid_start }}:{{ users_subid_count }}"
     create: true
     mode: "0644"
 
@@ -30,11 +102,11 @@
   ansible.builtin.lineinfile:
     path: /etc/subgid
     regexp: "^{{ users_stack_user_name }}:"
-    line: "{{ users_stack_user_name }}:100000:65536"
+    line: "{{ users_stack_user_name }}:{{ users_subid_start }}:{{ users_subid_count }}"
     create: true
     mode: "0644"
 
-# SSH for automation user
+# Optional: stack user SSH access (only managed when stack_user_ssh_pubkey is provided)
 - name: Ensure .ssh directory exists for stack user
   ansible.builtin.file:
     path: "/home/{{ users_stack_user_name }}/.ssh"
@@ -50,7 +122,9 @@
     owner: "{{ users_stack_user_name }}"
     group: "{{ users_stack_group_name }}"
     mode: "0600"
-  when: stack_user_ssh_pubkey is defined and stack_user_ssh_pubkey | length > 0
+  when:
+    - stack_user_ssh_pubkey is defined
+    - (stack_user_ssh_pubkey | string | trim | length) > 0
 
 # Passwordless sudo for automation user
 - name: Allow stack user passwordless sudo

@@ -1,4 +1,22 @@
 ---
+- name: Validate base role prerequisites
+  ansible.builtin.assert:
+    that:
+      # This role currently targets RHEL/CentOS/Fedora family via dnf
+      - ansible_facts['os_family'] is defined
+      - ansible_facts['os_family'] == 'RedHat'
+
+      # Ensure the stack service account variables are provided (used for /srv/podman ownership)
+      - users_stack_user_name is defined
+      - users_stack_group_name is defined
+      - (users_stack_user_name | string | length) > 0
+      - (users_stack_group_name | string | length) > 0
+    fail_msg: >-
+      Base role prerequisites failed. This role currently targets RedHat-family
+      systems (dnf). Ensure facts are available and set users_stack_user_name
+      and users_stack_group_name to non-empty values (typically provided via
+      group_vars/stack).
+
 - name: Ensure base packages are installed
   ansible.builtin.dnf:
     name:

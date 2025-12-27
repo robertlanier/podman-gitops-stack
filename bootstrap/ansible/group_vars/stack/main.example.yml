@@ -4,27 +4,49 @@
 stack_name: "podman-stack"
 
 # Stack service user (rootless Podman owner)
+# This non-login service account owns rootless Podman resources and stack data.
 
 # -------------------------------------------------------------------
-# UID/GID POLICY
+# UID/GID POLICY (recommended, but customizable)
 #
+# Defaults in this repo are chosen to avoid collisions with:
+# - OS system accounts
+# - NAS ACLs
+# - Rootless Podman user-namespace IDs
+#
+# Common ranges:
 # - System users:           < 1000
-# - Human/admin users:      1000–9999 (e.g. solwyn = 2000)
-# - Stack/service users:    13000+
+# - Human/admin users:      1000–9999
+# - Stack/service users:    13000+   (this repo's recommended pattern)
 #
-# This avoids collisions with OS users, NAS ACLs, and containers.
+# If you DON'T reserve a high range for service users in your environment,
+# you can set users_uid_min/users_gid_min to 1000 and choose a UID/GID in the
+# 1000–9999 range instead.
 # -------------------------------------------------------------------
 
 users_stack_user_name: "stack"
-users_stack_user_uid: 13000
 users_stack_group_name: "stack"
+users_stack_user_uid: 13000
 users_stack_group_gid: 13000
+users_uid_min: 13000
+users_gid_min: 13000
 
 # NAS / CIFS configuration
-nas_server: "nas.lan.example"
+nas_server: "nas.local"
 nas_share: "Data"
 nas_mount_point: "/mnt/data"
 nas_credentials_file: "/etc/secure/cifs_creds"
 
 nas_cifs_vers: "3.0"
-nas_cifs_extra_opts: "iocharset=utf8"
+nas_cifs_extra_opts: "iocharset=utf8,_netdev"
+
+# -------------------------------------------------------------------
+# OPTIONAL: stack user SSH access
+#
+# If set, the users role will install this public key as:
+#   /home/<users_stack_user_name>/.ssh/authorized_keys
+#
+# Leave blank to skip managing SSH keys for the stack service account.
+# (Most users will SSH as their admin user, e.g. 'solwyn'.)
+# -------------------------------------------------------------------
+stack_user_ssh_pubkey: ""

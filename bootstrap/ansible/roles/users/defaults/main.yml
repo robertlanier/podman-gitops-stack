@@ -1,6 +1,29 @@
 ---
 # Stack service user defaults. Override in group_vars/stack/main.yml.
+
+# -------------------------------------------------------------------
+# UID/GID POLICY
+#
+# - System users:           < 1000
+# - Human/admin users:      1000–9999 (e.g. solwyn = 2000)
+#
+# This avoids collisions with OS users, NAS ACLs, and containers.
+# -------------------------------------------------------------------
+
 users_stack_user_name: stack
-users_stack_user_uid: 13000
 users_stack_group_name: stack
-users_stack_group_gid: 13000
+users_uid_min: 1000  # Minimum allowed UID for stack service user
+users_gid_min: 1000  # Minimum allowed GID for stack service group
+
+# Subordinate UID/GID range used by rootless Podman containers
+users_subid_start: 100000
+users_subid_count: 65536
+
+# -------------------------------------------------------------------
+# SSH PUBLIC KEY VALIDATION
+#
+# Used only for sanity-checking an optional SSH public key provided
+# via group_vars. This does NOT install a key by itself.
+# -------------------------------------------------------------------
+
+users_stack_user_ssh_pubkey_regex: "^(ssh-(ed25519|rsa)|ecdsa-sha2-nistp(256|384|521))\\s+"

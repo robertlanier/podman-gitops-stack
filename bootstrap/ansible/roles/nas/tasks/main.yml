@@ -27,6 +27,43 @@
       NAS credentials are not configured. Define nas_username and nas_password
       (preferably in an encrypted group_vars/stack/vault.yml), and ensure
       nas_credentials_file is set (e.g., /etc/secure/cifs_creds).
+  no_log: true
+
+- name: Validate NAS mount configuration (sanity checks)
+  ansible.builtin.assert:
+    that:
+      # mountpoint
+      - nas_mount_point is defined
+      - (nas_mount_point | string | length) > 0
+      - (nas_mount_point | string) is match('^/')
+      - nas_mount_point not in ['/', '/mnt', '/media']
+
+      # credentials file
+      - nas_credentials_file is defined
+      - (nas_credentials_file | string | length) > 0
+      - (nas_credentials_file | string) is match('^/')
+      - (nas_credentials_file | string) is match('^/etc/secure/')
+
+      # server/share
+      - nas_server is defined
+      - nas_share is defined
+      - (nas_server | string | length) > 0
+      - (nas_share | string | length) > 0
+      - not (nas_share | string) is match('^/')
+
+      # CIFS version
+      - nas_cifs_vers is defined
+      - (nas_cifs_vers | string) in ['1.0', '2.0', '2.1', '3.0', '3.1.1']
+
+      # extra opts should not override credentials handling
+      - (nas_cifs_extra_opts | default('') | string) is not search('(^|,)\s*credentials=')
+    fail_msg: >-
+      NAS mount configuration failed validation. Ensure nas_mount_point is an
+      absolute path (not '/', '/mnt', or '/media'), nas_credentials_file is an
+      absolute path under /etc/secure/, nas_server and nas_share are non-empty
+      (nas_share should not start with '/'), nas_cifs_vers is one of
+      1.0/2.0/2.1/3.0/3.1.1, and nas_cifs_extra_opts does not contain
+      'credentials='.
 
 # NAS credentials come from vaulted group_vars/stack/vault.yml
 - name: Ensure NAS credentials file exists
@@ -40,10 +77,31 @@
     mode: '0600'
   no_log: true
 
+- name: Build CIFS mount options
+  ansible.builtin.set_fact:
+    nas_cifs_mount_opts: >-
+      {{
+        (
+          [
+            '_netdev',
+            'vers=' ~ nas_cifs_vers,
+            'credentials=' ~ nas_credentials_file
+          ]
+          + (
+            ((nas_cifs_extra_opts | default('') | trim) | length > 0)
+            | ternary((nas_cifs_extra_opts | trim).split(','), [])
+          )
+        )
+        | map('trim')
+        | reject('equalto', '')
+        | list
+        | join(',')
+      }}
+
 - name: Ensure NAS share is mounted (and persisted in fstab)
   ansible.posix.mount:
     path: "{{ nas_mount_point }}"
     src: "//{{ nas_server }}/{{ nas_share }}"
     fstype: cifs
-    opts: "_netdev,vers={{ nas_cifs_vers }},credentials={{ nas_credentials_file }}{{ (',' + (nas_cifs_extra_opts | default('') | trim)) if ((nas_cifs_extra_opts | default('') | trim) | length > 0) else '' }}"
+    opts: "{{ nas_cifs_mount_opts }}"
     state: mounted
