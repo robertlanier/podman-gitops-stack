@@ -1,0 +1,22 @@
+---
+# .yamlfmt
+# Configuration for yamlfmt (YAML formatter)
+# https://github.com/google/yamlfmt
+
+formatter:
+  type: basic
+  retain_line_breaks: true
+  max_line_length: 120
+  scan_folded_as_literal: true
+  indentless_arrays: false
+  drop_merge_tag: false
+  pad_line_comments: 2
+
+# Exclude files that have complex indentation or require document start markers
+# - GitHub Actions workflows have complex bash script indentation
+# - Ansible files require document start markers (---) for ansible-lint
+exclude:
+  - .github/workflows/*.yml
+  - .github/workflows/*.yaml
+  - bootstrap/ansible/**/*.yml
+  - bootstrap/ansible/**/*.yaml

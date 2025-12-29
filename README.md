@@ -1,11 +1,34 @@
-# Podman GitOps Stack — Bootstrap Component (Ansible OS Provisioning)
+# Podman GitOps Stack — Multi-Host Homelab Automation
 
-Welcome to the **Podman GitOps Stack Bootstrap** — a fully automated, reproducible, GitOps-ready foundation for deploying your homelab media stack using **CentOS Stream 9**, **Ansible**, and (later) **rootless Podman**.
+Welcome to the **Podman GitOps Stack** — a fully automated, reproducible, GitOps-ready platform for deploying homelab services across multiple Linux hosts using **Ansible**, **Quadlet**, and **systemd**.
 
-This README guides you through the entire process **starting from a fresh workstation**, all the way to having your CentOS Stream server configured exactly as your automation expects.
+This project provides declarative, distro-agnostic container deployments for:
 
-The bootstrap component handles the **operating system**, **users**, **NAS mounts**, and **base packages** as part of the overall Podman GitOps Stack.  
-The *next* phase will automate **container orchestration** using the Podman Python SDK.
+- **Network foundation** (DNS, HomeKit, NTP) on dedicated appliance hardware
+- **Media stack** (Plex, *arr apps, downloads) on application server
+- **Observability & control** (Grafana, Prometheus, monitoring, backups) on control plane
+
+The bootstrap component handles the **operating system**, **users**, **NAS mounts**, and **base packages** as the foundation.
+The deployment phase (upcoming) will use **Quadlet** to generate systemd units for declarative container management.
+
+---
+
+## Table of Contents
+
+1. [What This Bootstrap Actually Does](#1-what-this-bootstrap-actually-does)
+2. [Prepare Your Workstation](#2-prepare-your-workstation)
+3. [Prepare Your CentOS Stream Server](#3-prepare-your-centos-stream-server)
+4. [Repository Structure (What You Should See)](#4-repository-structure-what-you-should-see)
+5. [Set Up Your Ansible Vault (Required Before First Run)](#5-set-up-your-ansible-vault-required-before-first-run)
+6. [Secrets Management UX](#6-secrets-management-ux)
+7. [Configure the Inventory](#7-configure-the-inventory)
+8. [Test Connectivity](#8-test-connectivity)
+9. [Run the Bootstrap](#9-run-the-bootstrap)
+10. [Verify the System](#10-verify-the-system)
+11. [Recommended .gitignore](#11-recommended-gitignore)
+12. [CI & Local Checks](#12-ci--local-checks)
+13. [Tag Your Bootstrap Release](#13-tag-your-bootstrap-release)
+14. [What Comes Next (Phase 4)](#14-what-comes-next-phase-4)
 
 ---
 
@@ -15,9 +38,9 @@ Running this Ansible playbook configures your CentOS server to be GitOps-ready b
 
 ### 👤 Creating the system automation user (`stack`)
 
-- UID/GID = 2000  
-- Passwordless sudo  
-- SSH-key only authentication  
+- UID/GID = 13000 (configurable)
+- Passwordless sudo
+- SSH-key only authentication
 - Prepared for **rootless Podman** (subuid/subgid configured)
 
 > Note: The `solwyn` user (or installer user) is used only for initial SSH access and bootstrap execution.
@@ -33,15 +56,15 @@ Running this Ansible playbook configures your CentOS server to be GitOps-ready b
 
 Including:
 
-- podman  
-- git  
-- python3 / pip  
-- cifs-utils  
-- cockpit + cockpit-podman  
-- nano / neovim  
-- unzip  
-- epel-release  
-- btop  
+- podman
+- git
+- python3 / pip
+- cifs-utils
+- cockpit + cockpit-podman
+- nano / neovim
+- unzip
+- epel-release
+- btop
 
 ### Enabling Cockpit Web Console
 
@@ -63,58 +86,30 @@ For macOS, install Homebrew if not already installed:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-### Step 2.2 — Set Up Python Virtual Environment & Install Dependencies
+### Step 2.2 — Set Up Python Virtual Environment
 
-Create a virtual environment:
+Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install Python dependencies:
+Install dependencies:
 
 ```bash
-pip install -e ".[dev]"
-```
-
-Install Ansible Galaxy collections:
-
-```bash
+python -m pip install -e ".[dev]"
 ansible-galaxy collection install -r bootstrap/ansible/collections/requirements.yml
+pre-commit install
 ```
 
-Confirm installation:
+Confirm Ansible is installed:
 
 ```bash
 ansible --version
 ```
 
-> **Note:** CI will run lint + syntax checks automatically on pull requests and pushes to main.
-
----
-
-### Why Ansible Galaxy Is Still Required
-
-Python package managers (pip / pyproject.toml) and Ansible Galaxy solve **different problems**:
-
-- **pip / pyproject.toml** installs *Python libraries* (Ansible itself, ansible-lint, SDKs, CLI tools).
-- **Ansible Galaxy** installs *Ansible content* (collections, modules, plugins, roles).
-
-Even when Ansible is installed via `pip`, Galaxy collections **are not Python packages** and must be installed separately.
-
-Examples of Galaxy-managed content:
-
-- `ansible.posix`
-- `community.general`
-- Custom modules and filters
-
-That is why this project uses **both**:
-
-- `pip install -e ".[dev]"` for Python tooling
-- `ansible-galaxy collection install -r bootstrap/ansible/collections/requirements.yml` for Ansible content
-
-This separation is intentional and follows current Ansible best practices.
+> For contributor-specific workflows and tooling details, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -205,7 +200,7 @@ podman-gitops-stack/
   └── README.md
 ```
 
-> Note: The `.ansible/` directory under `bootstrap/ansible` is used for runtime cache and Galaxy metadata.  
+> Note: The `.ansible/` directory under `bootstrap/ansible` is used for runtime cache and Galaxy metadata.
 > It is intentionally ignored by git to avoid committing transient files.
 
 ---
@@ -237,14 +232,14 @@ nas_password: YOUR_REAL_SMB_PASSWORD
 stack_user_ssh_pubkey: "ssh-ed25519 AAAA...."
 ```
 
-Save and exit.  
+Save and exit.
 This file is now AES-encrypted and **safe to commit**.
 
 **Vault Variables Explained:**
 
-- `nas_username` — SMB username for NAS share authentication  
-- `nas_password` — SMB password (use a strong password; consider rotating periodically)  
-- `stack_user_ssh_pubkey` — Your public SSH key for automation user authentication (key-only auth, no passwords)  
+- `nas_username` — SMB username for NAS share authentication
+- `nas_password` — SMB password (use a strong password; consider rotating periodically)
+- `stack_user_ssh_pubkey` — Your public SSH key for automation user authentication (key-only auth, no passwords)
 
 ---
 
@@ -278,7 +273,7 @@ all:
           ansible_python_interpreter: /usr/bin/python3
 ```
 
-> Note: Initial runs typically use the installer/admin user (e.g., `solwyn`) for SSH access and bootstrap execution.  
+> Note: Initial runs typically use the installer/admin user (e.g., `solwyn`) for SSH access and bootstrap execution.
 > After bootstrapping completes, you may update `ansible_user` to `stack` for subsequent automation runs.
 
 ---
@@ -369,27 +364,36 @@ __pycache__/
 
 ---
 
-## 12. CI Checks
+## 12. CI & Local Checks
 
-This project uses GitHub Actions to run style and correctness checks on all pull requests and pushes to main.
+This project uses **pre-commit hooks** for all code quality checks. This ensures local and CI environments run identical checks.
 
-Checks include:
-
-- yamllint  
-- ansible-lint  
-- `ansible-playbook --syntax-check`
-
-To run the same checks locally from the repository root, use:
+### Install Pre-commit Hooks (One-Time)
 
 ```bash
-pip install -e ".[dev]"
-ansible-galaxy collection install -r bootstrap/ansible/collections/requirements.yml
-yamllint -c .yamllint bootstrap/ansible
-cd bootstrap/ansible && ansible-lint -v site.yml roles --exclude collections
-ansible-playbook -i bootstrap/ansible/inventory/hosts.ci.yml bootstrap/ansible/site.yml --syntax-check
+pre-commit install
 ```
 
-> The CI inventory targets localhost and is safe to run without making any real changes.
+### Run Checks Manually
+
+```bash
+# Run all checks on all files
+pre-commit run --all-files
+
+# Run specific check
+pre-commit run ruff --all-files
+pre-commit run ansible-lint --all-files
+```
+
+### What Gets Checked
+
+- **Python**: ruff (linting + formatting)
+- **YAML**: yamllint + yamlfmt
+- **Ansible**: ansible-lint
+- **Markdown**: markdownlint-cli2
+- **General**: trailing whitespace, end-of-file, merge conflicts
+
+CI runs the same checks automatically on all pull requests and pushes to main.
 
 ---
 
@@ -407,38 +411,63 @@ git push --tags
 
 ---
 
-## 14. What Comes Next (Phase 2)
+## 14. What Comes Next (Phase 4)
 
-This bootstrap component prepares the OS.  
-Next we will build:
+This bootstrap component prepares the OS.
+Next we will implement:
 
-### 🐳 A declarative container stack using
+### 🐳 Declarative Container Stack using Quadlet + systemd
 
-- Rootless Podman  
-- Traefik routing  
-- Jellyfin / Jellyseerr  
-- Sonarr / Radarr / Prowlarr  
-- qBittorrent + management utilities  
-- Auto-updating & health checks
+**Architecture:**
 
-### 🐍 Python Podman SDK (GitOps)
+- Per-host `stack.yaml` config files
+- Ansible generates Quadlet .container files from Jinja2 templates
+- systemd manages container lifecycle (start, stop, restart, boot integration)
+- No long-running controller — systemd-native, RHEL/Fedora first-class
 
-- Generate systemd units automatically  
-- Reconcile container state on demand  
-- Push config updates through Git  
+**Services by Host:**
+
+**netapp (Network Appliance):**
+
+- Pi-hole + NextDNS (DNS blocking + DoH)
+- Homebridge (HomeKit bridge)
+- chrony (NTP time sync)
+
+**appserver (Application Platform):**
+
+- Traefik (LAN-only reverse proxy)
+- **Media Stack:** Plex (anime support), Sonarr, Radarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent, autobrr
+- paperless-ngx (document management)
+- dozzle (real-time log viewer)
+
+**controlplane (Control Plane):**
+
+- **Observability:** Grafana, Prometheus, Loki, Promtail, Alertmanager (Discord webhooks)
+- **Monitoring:** Uptime Kuma, blackbox-exporter, Scrutiny (drive health)
+- **Infrastructure:** Homepage dashboard, ntfy (push notifications)
+- **Security:** step-ca (private CA), vaultwarden (password manager)
+- **Backup:** restic (encrypted, deduplicated)
+- **Chat:** The Lounge + ZNC (IRC)
+- **Sync:** Syncthing (config/backup replication)
+
+### 🐍 Python Tooling (Optional)
+
+- Development utilities for testing and validation
+- Repo management scripts
+- Config validation tools
 
 ### Optional: PXE / Kickstart auto-installer
 
 Your NAS can host a PXE boot environment that automatically:
 
-1. Installs CentOS Stream  
-2. Pulls this repo  
-3. Runs the bootstrap  
-4. Registers itself into your fleet  
+1. Installs CentOS Stream
+2. Pulls this repo
+3. Runs the bootstrap
+4. Registers itself into your fleet
 
 ---
 
 ## Done
 
-Your OS layer is now fully automated, reproducible, and GitOps-friendly.  
+Your OS layer is now fully automated, reproducible, and GitOps-friendly.
 You're ready for Phase 2: **container orchestration automation**.

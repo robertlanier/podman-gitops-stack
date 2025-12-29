@@ -1,0 +1,102 @@
+# .markdownlint.yaml
+# Markdownlint configuration for podman-gitops-stack
+#
+# Goals:
+# - Clean, readable Markdown
+# - Low-noise CI output
+# - Practical defaults for docs-heavy repos
+#
+# Note:
+# markdownlint supports YAML natively.
+# This file replaces the previous .markdownlint.json.
+
+# Enable all default rules unless overridden below
+default: true
+
+# --------------------------------------------------
+# Line length
+# --------------------------------------------------
+# - Keep prose readable
+# - Do NOT fail on tables or fenced code blocks
+# - Disabled for documentation files with long URLs/commands
+MD013: false
+
+# --------------------------------------------------
+# Allow repeated headings within different sections
+# (common in changelogs and long docs)
+# --------------------------------------------------
+MD024:
+  siblings_only: true
+
+# --------------------------------------------------
+# Unordered list indentation
+# --------------------------------------------------
+MD007:
+  indent: 2
+
+# --------------------------------------------------
+# Trailing spaces
+# --------------------------------------------------
+MD009:
+  br_spaces: 2
+  strict: false
+
+# --------------------------------------------------
+# Tabs (allowed in code blocks only)
+# --------------------------------------------------
+MD010:
+  code_blocks: true
+
+# --------------------------------------------------
+# Multiple blank lines
+# --------------------------------------------------
+MD012:
+  maximum: 1
+
+# --------------------------------------------------
+# Headings should have consistent spacing
+# --------------------------------------------------
+MD022:
+  lines_above: 1
+  lines_below: 1
+
+# --------------------------------------------------
+# Trailing punctuation in headings
+# --------------------------------------------------
+MD026:
+  punctuation: ".,;:!?"
+
+# --------------------------------------------------
+# Ordered list style
+# --------------------------------------------------
+MD029:
+  style: ordered
+
+# --------------------------------------------------
+# Inline HTML (allow useful semantic elements)
+# --------------------------------------------------
+MD033:
+  allowed_elements:
+    - details
+    - summary
+    - br
+    - sub
+    - sup
+    - kbd
+
+# --------------------------------------------------
+# Fenced code blocks
+# --------------------------------------------------
+MD046:
+  style: fenced
+
+# --------------------------------------------------
+# Table column style (pipe alignment)
+# --------------------------------------------------
+# Allow any style: consistent, padded, compact
+MD060: false
+
+# --------------------------------------------------
+# File should end with a single newline
+# --------------------------------------------------
+MD047: true

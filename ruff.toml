@@ -1,0 +1,85 @@
+# ruff.toml
+# Ruff = fast Python linter + import sorter (+ optional formatter).
+# Best UX: keep the rule set practical, minimize noisy style fights,
+# and make it easy to run locally + in CI.
+
+# Match your project’s Python version
+target-version = "py311"
+
+# Keep consistent with yamllint/yamlfmt (120 characters)
+line-length = 120
+
+# Only lint/format the code we own. Skip generated, vendored, and tooling dirs.
+# Keep this list in sync with .yamllint / markdownlint config / ansible-lint where applicable.
+
+# If you want Ruff to auto-fix where safe:
+#   ruff check --fix .
+fix = true
+
+# Show full error codes in output (nice for CI logs)
+show-fixes = true
+
+[lint]
+# A pragmatic, common starter set:
+# - E/F: pycodestyle + pyflakes (core correctness)
+# - I: import sorting (replaces isort)
+# - UP: pyupgrade suggestions
+# - B: bugbear (common footguns)
+# - SIM: simplifications
+# - RUF: Ruff-specific rules
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+# Let line-length be handled by `line-length` and not treated as a hard error
+# (especially useful if you later adopt a formatter).
+ignore = ["E501"]
+
+# If you have generated/vendor dirs, exclude them here
+exclude = [
+  # VCS
+  ".git",
+
+  # Python environments / caches
+  ".venv",
+  "venv",
+  ".tox",
+  "__pycache__",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+
+  # Build artifacts
+  "dist",
+  "build",
+  "*.egg-info",
+
+  # Node / docs tooling
+  "node_modules",
+
+  # Ansible / vendor (do not lint third-party content)
+  "collections",
+  "vendor",
+
+  # Common repo metadata
+  ".github",
+]
+
+[lint.isort]
+# Keep imports deterministic and clean
+combine-as-imports = true
+force-sort-within-sections = true
+known-first-party = ["orchestration", "stackctl"]
+
+[lint.per-file-ignores]
+# Common exceptions:
+# __init__.py often re-exports names intentionally (avoid noisy unused-import warnings)
+"**/__init__.py" = ["F401"]
+
+# If you keep scripts that intentionally use prints:
+# "scripts/**.py" = ["T201"]
+
+[format]
+# If/when you want Ruff formatting (optional):
+# You can run `ruff format .`
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

@@ -1,6 +1,64 @@
-extends: default
+# .yamllint
+# Lints YAML files for consistent style and fewer “gotchas”.
+#
+# Notes:
+# - We extend the upstream `default` ruleset, then tune a few rules for
+#   readability and Ansible/GitHub Actions friendliness.
+# - `truthy` is disabled because Ansible playbooks commonly use yes/no/on/off.
+#
+# Docs: https://yamllint.readthedocs.io/
 
+extends: default
+# Paths that are generated, vendored, or third-party and should be excluded from linting.
+ignore: |
+  bootstrap/ansible/collections/**
+  .venv/**
+  .tox/**
+  build/**
+  dist/**
+  node_modules/**
+  vendor/**
+  **/__pycache__/**
+  **/.mypy_cache/**
 rules:
+  # Keep lines readable, but don’t fail the build on long URLs/SHAs.
   line-length:
-    max: 140
+    max: 120
     level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  # Consistent indentation (2 spaces is the most common for YAML in infra repos).
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+    check-multi-line-strings: false  # GitHub Actions workflows use unusual indentation for bash scripts
+  # Require the document start marker (`---`) for clarity.
+  document-start:
+    present: true
+    level: warning  # Warn but don't fail - some files legitimately omit this
+  # Allow yes/no/on/off which are common in Ansible.
+  truthy: disable
+  # Avoid trailing spaces.
+  trailing-spaces:
+    level: error
+  # Ensure files end with a newline.
+  new-line-at-end-of-file:
+    level: error
+  # Prefer a single blank line max (keeps diffs clean).
+  empty-lines:
+    max: 1
+    max-start: 0
+    max-end: 1
+  # Be forgiving about braces/brackets spacing; still catch obvious issues.
+  braces:
+    max-spaces-inside: 1
+    level: warning
+  brackets:
+    max-spaces-inside: 1
+    level: warning
+  # Keep comments readable.
+  comments:
+    min-spaces-from-content: 1
+  # Enforce unix newlines.
+  new-lines:
+    type: unix

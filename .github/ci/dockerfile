@@ -1,0 +1,62 @@
+
+
+# syntax=docker/dockerfile:1
+# ------------------------------------------------------------
+# CI image for podman-gitops-stack
+#
+# Goals:
+# - Provide a consistent, reproducible toolchain for GitHub Actions
+# - Include Ansible + linters + YAML tooling used by this repo
+# - Keep it reasonably small and fast to build
+#
+# Note:
+# - This image is intended for CI jobs (not production runtime).
+# - If you add new tools to CI, add them here to keep workflows simple.
+# ------------------------------------------------------------
+
+FROM python:3.11-slim
+
+# Avoid interactive apt prompts
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# OS packages commonly needed for Ansible + CI tasks
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+       ca-certificates \
+       curl \
+       git \
+       openssh-client \
+       rsync \
+       jq \
+       bash \
+       tini \
+  && rm -rf /var/lib/apt/lists/*
+
+# Python tooling used by this repo
+# - ansible-core: playbooks / syntax checks
+# - ansible-lint: linting
+# - yamllint: YAML linting
+# - yamlfmt: YAML formatting (auto-fix)
+# - packaging tooling is handy for some CI scripts
+RUN python -m pip install --upgrade pip setuptools wheel \
+  && python -m pip install \
+       ansible-core \
+       ansible-lint \
+       yamllint \
+       yamlfmt
+
+# Helpful defaults
+WORKDIR /work
+
+# Print versions in logs when the container starts (nice CI UX)
+RUN ansible --version \
+  && ansible-lint --version \
+  && yamllint --version \
+  && yamlfmt --version
+
+# Use tini as PID 1 (helps signal handling in CI)
+ENTRYPOINT ["/usr/bin/tini","--"]
+CMD ["bash"]

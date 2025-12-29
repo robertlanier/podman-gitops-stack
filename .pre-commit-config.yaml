@@ -1,0 +1,76 @@
+# .pre-commit-config.yaml
+# Runs on commit (and can run on-demand). Focus: fast feedback + auto-fix where possible.
+# Install:
+#   python -m pip install pre-commit
+#   pre-commit install
+# Run all:
+#   pre-commit run --all-files
+
+repos:
+  # ----------------------------
+  # Basic hygiene auto-fixes
+  # ----------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # ----------------------------
+  # Python: ruff (lint + format)
+  # ----------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # Auto-fix lint issues where safe
+      - id: ruff
+        args: ["--fix"]
+      # Auto-format Python
+      - id: ruff-format
+
+  # ----------------------------
+  # YAML: yamlfmt (auto-format)
+  # ----------------------------
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.10.0
+    hooks:
+      - id: yamlfmt
+        exclude: ^(\.github/workflows/.*\.ya?ml|bootstrap/ansible/).*$
+        # yamlfmt will respect .yamlfmt.yaml if you add it later
+        # args: ["-conf", ".yamlfmt.yaml"]
+
+  # ----------------------------
+  # YAML: yamllint (validation)
+  # ----------------------------
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        # yamllint uses .yamllint or .yamllint.yml if present automatically
+        # args: ["-c", ".yamllint"]
+
+  # ----------------------------
+  # Markdown: markdownlint-cli2 (validation)
+  # ----------------------------
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.14.0
+    hooks:
+      - id: markdownlint-cli2
+        # Uses .markdownlint.yaml if present
+        # args: ["--config", ".markdownlint.yaml"]
+
+  # ----------------------------
+  # Ansible: ansible-lint (validation)
+  # ----------------------------
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.9.2
+    hooks:
+      - id: ansible-lint
+        # If you add .ansible-lint, it will be used automatically
+        # args: ["-c", ".ansible-lint"]
+        additional_dependencies:
+          - ansible-core>=2.16,<2.19

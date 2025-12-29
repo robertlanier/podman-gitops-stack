@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=80", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "podman-gitops-stack"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Rootless Podman homelab stack with a GitOps-style desired state and reconciliation."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,12 +25,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Dev tooling for this repo (linting + tests + Ansible content tooling). Note: ansible-dev-tools
-# includes ansible-lint and other Ansible dev utilities.
+# Dev tooling for this repo (linting + tests + Ansible content tooling).
+# NOTE: We intentionally do NOT include ansible-dev-tools or the ansible meta-package here, to avoid resolver conflicts.
+# NOTE: We also intentionally do NOT include yamlfmt via pip (it conflicts with ruamel.yaml constraints from ansible-lint).
 dev = [
-  "ansible-dev-tools>=25.0.0,<26",
+  "ansible-core>=2.16,<2.19",
+  "ansible-lint>=25.0.0,<26",
+  "yamllint>=1.35.0,<2",
   "pytest>=8.0.0,<9",
   "ruff>=0.6.0,<1",
+  "pre-commit>=3.7,<5",
 ]
 
 orchestrator = [
@@ -40,21 +44,35 @@ orchestrator = [
 [project.scripts]
 stackctl = "orchestration.stackctl.cli:main"
 
-[tool.setuptools]
+[tool.setuptools.packages.find]
 # This repo is a multi-folder stack (bootstrap/, config/, orchestration/, etc.).
-# Explicitly package ONLY the Python code under `orchestration/`.
-packages = ["orchestration"]
+# Package only the Python modules we maintain.
+include = ["orchestration*"]
+exclude = ["bootstrap*", "config*", "collections*", "docs*", "scripts*", "tests*", "vendor*"]
+
+# setuptools-scm derives the package version from Git tags.
+#
+# IMPORTANT:
+# - Local and CI installs MUST have access to the full git history + tags.
+# - If versions look wrong (e.g. 0.0.0 or unexpected +gHASH),
+#   check that:
+#     1) The repo is checked out with full history (fetch-depth: 0)
+#     2) Tags are present (git tag --list)
+#     3) This section exists and is not overridden
+#
+# setuptools-scm configuration
+# - `guess-next-dev` provides predictable dev versions between releases
+# - `no-local-version` keeps versions clean (no +g<hash>) for better UX in CLIs,
+#   docs, and packaging output. CI and changelogs remain the source of build metadata.
+#
+# Expected behavior:
+# - On tag v0.1.1      -> version == "0.1.1"
+# - On main after tag  -> version == "0.1.2.devN"
+# - local_scheme = "no-local-version" avoids "+g<hash>" suffixes
+#
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
-ignore = []
-
-[tool.ruff.lint.isort]
-known-first-party = ["orchestration", "stackctl"]

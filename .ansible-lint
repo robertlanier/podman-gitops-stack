@@ -1,0 +1,53 @@
+# .ansible-lint
+# -----------------------------------------------------------------------------
+# Ansible Lint Configuration
+#
+# Purpose:
+# - Enforce consistent, readable Ansible code
+# - Avoid linting vendored / generated content
+# - Keep CI signal high (real issues only)
+#
+# This file is auto-discovered by ansible-lint.
+# -----------------------------------------------------------------------------
+
+# Skip vendored or generated content
+exclude_paths:
+  - bootstrap/ansible/collections/**
+  - .venv/
+  - .tox/
+  - dist/
+  - build/
+  # Config files for other tools (not Ansible)
+  - .github/
+  - .ansible-lint
+  - .yamllint
+  - .markdownlint.yaml
+  - .pre-commit-config.yaml
+  - cliff.toml
+  - ruff.toml
+  - pyproject.toml
+
+# Treat findings as errors in CI (recommended)
+# Contributors can still run locally and iterate.
+warn_list: []
+
+# Optional: rules to skip if they are noisy or not applicable
+# Uncomment only if you *intentionally* diverge from a rule.
+# skip_list:
+#   - role-name
+#   - yaml[comments]
+
+# Enforce modern Ansible best practices
+enable_list:
+  - yaml
+  - risky-shell-pipe
+  - no-handler
+  - fqcn
+
+# Improve output readability
+verbosity: 1
+
+# Match your repo layout
+kinds:
+  - playbook: "**/site.yml"
+  - role: "roles/*"
